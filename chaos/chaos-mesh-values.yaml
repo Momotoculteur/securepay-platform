@@ -1,0 +1,17 @@
+# ==============================================================================
+# CHAOS MESH - VALEURS ADAPTÉES À k3s / k3d (jalon J4)
+# ==============================================================================
+chaosDaemon:
+  # k3s n'utilise pas Docker mais son propre containerd, avec un socket dédié
+  runtime: containerd
+  socketPath: /run/k3s/containerd/containerd.sock
+
+controllerManager:
+  # Garde-fou : seuls les namespaces annotés chaos-mesh.org/inject=enabled
+  # peuvent recevoir des pannes. Un namespace non annoté est hors d'atteinte.
+  enableFilterNamespace: true
+
+dashboard:
+  # Le dashboard exige un jeton de ServiceAccount : ne pas désactiver
+  securityMode: true
+  # TODO [J4] : RBAC dédié aux expériences (ServiceAccount limité au namespace securepay)

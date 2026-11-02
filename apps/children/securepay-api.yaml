@@ -1,0 +1,35 @@
+# ==============================================================================
+# APPLICATION SECUREPAY API
+# ==============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: securepay-api
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.com/<groupe>/securepay-platform.git
+    targetRevision: main
+    path: charts/securepay-api
+    helm:
+      valueFiles:
+        - values.yaml
+        # Fichier mis à jour par la Merge Request de promotion (digest de l'image signée)
+        - values-production.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: securepay
+  syncPolicy:
+    # [AUDIT ANOMALY] Synchronisation automatique sans prune ni selfHeal :
+    # une dérive manuelle (kubectl edit/delete) n'est jamais corrigée.
+    # TODO [J4] : activer la réconciliation et prouver la correction d'une dérive.
+    automated:
+      prune: false
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+    # TODO [J2] : labels Pod Security Admission du namespace (managedNamespaceMetadata)
+    # TODO [J4] : annotation d'injection Chaos Mesh du namespace (voir chaos/README.md)

@@ -1,0 +1,87 @@
+# ==============================================================================
+# SECUREPAY PLATFORM - PIPELINE DE VALIDATION DE L'ÉTAT DÉSIRÉ
+# ==============================================================================
+# Cette pipeline ne déploie rien : Argo CD tire l'état désiré après le merge.
+# Son rôle est de refuser une Merge Request qui casserait la plateforme ou
+# violerait une politique de sécurité (shift left des contrôles d'admission).
+# Images et outils épinglés sur des versions vérifiées (novembre 2026).
+# ==============================================================================
+stages:
+  - lint
+  - render
+  - validate
+  - policy
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+yamllint:
+  stage: lint
+  image: python:3.13-slim
+  script:
+    - pip install --quiet --root-user-action=ignore yamllint==1.38.0
+    - yamllint --strict .
+
+ansible-lint:
+  stage: lint
+  image: python:3.13-slim
+  script:
+    - pip install --quiet --root-user-action=ignore ansible-lint==26.10.1
+    - cd ansible
+    - ansible-lint hardening.yml audit-lynis.yml
+
+helm:
+  stage: render
+  image:
+    name: alpine/helm:4.3.1
+    entrypoint: [""]
+  script:
+    - helm lint charts/securepay-api -f charts/securepay-api/values-production.yaml
+    - mkdir -p rendered
+    - >-
+      helm template securepay-api charts/securepay-api --namespace securepay
+      -f charts/securepay-api/values.yaml
+      -f charts/securepay-api/values-production.yaml
+      > rendered/securepay-api.yaml
+  artifacts:
+    paths:
+      - rendered/
+    expire_in: 1 week
+
+kubeconform:
+  stage: validate
+  image:
+    name: ghcr.io/yannh/kubeconform:v0.8.0-alpine
+    entrypoint: [""]
+  needs: [helm]
+  script:
+    # Schémas Kubernetes + catalogue communautaire des CRD (Argo CD, Prometheus Operator, Chaos Mesh...)
+    - >-
+      kubeconform -strict -summary -output text
+      -schema-location default
+      -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json'
+      -ignore-missing-schemas
+      rendered/ apps/ observability/rules/ chaos/experiments/ policies/disallow-latest-tag.yaml
+
+kyverno:
+  stage: policy
+  image: alpine:3.22
+  needs: [helm]
+  variables:
+    KYVERNO_VERSION: v1.19.2
+  before_script:
+    - apk add --no-cache curl
+    - ARCH="$(uname -m | sed 's/aarch64/arm64/')"
+    - ARCHIVE="kyverno-cli_${KYVERNO_VERSION}_linux_${ARCH}.tar.gz"
+    - curl -fsSLO "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/${ARCHIVE}"
+    - curl -fsSLO "https://github.com/kyverno/kyverno/releases/download/${KYVERNO_VERSION}/checksums.txt"
+    - grep " ${ARCHIVE}$" checksums.txt | sha256sum -c -
+    - tar -xzf "${ARCHIVE}" kyverno
+    - install -m 0755 kyverno /usr/local/bin/kyverno
+  script:
+    - kyverno test policies/tests/
+    # TODO [J2] : appliquer toutes les politiques aux manifests rendus et faire
+    # échouer la MR en cas de violation (fichiers passés un par un, pas le dossier) :
+    # - kyverno apply policies/*.yaml --resource rendered/securepay-api.yaml

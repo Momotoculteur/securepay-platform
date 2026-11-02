@@ -1,0 +1,37 @@
+# ==============================================================================
+# CHAOS MESH - injection de pannes (jalon J4)
+# ==============================================================================
+# Pour activer : déplacer ce fichier dans apps/children/.
+# Seul l'opérateur est déployé par Argo CD. Les expériences de chaos/experiments/
+# ne sont JAMAIS synchronisées automatiquement : elles se déclenchent à la main,
+# sous charge, avec une hypothèse et une condition d'arrêt (voir chaos/README.md).
+# ==============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: chaos-mesh
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.chaos-mesh.org
+      chart: chaos-mesh
+      targetRevision: 2.8.7
+      helm:
+        valueFiles:
+          - $values/chaos/chaos-mesh-values.yaml
+    - repoURL: https://gitlab.com/<groupe>/securepay-platform.git
+      targetRevision: main
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: chaos-mesh
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

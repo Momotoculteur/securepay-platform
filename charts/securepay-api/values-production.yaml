@@ -1,0 +1,9 @@
+# ==============================================================================
+# SECUREPAY API - VALEURS DE PRODUCTION
+# ==============================================================================
+# Ce fichier est modifié par le job `promote` de la pipeline securepay-api, via
+# une Merge Request : chaque mise en production est un commit revu et tracé.
+# ==============================================================================
+image:
+  # TODO [J1] : digest de l'image signée, écrit par la MR de promotion
+  digest: ""

@@ -1,0 +1,13 @@
+# Fichiers générés localement (cloud-init rendu, kubeconfig du poste)
+.build/
+rendered/
+
+# Identifiants de bootstrap : jamais dans Git
+bootstrap/repo-credentials.env
+
+# Ansible
+*.retry
+
+# Divers
+.DS_Store
+*.swp

@@ -1,0 +1,12 @@
+---
+# ==============================================================================
+# RÔLE firewall - Pare-feu de la VM
+# ==============================================================================
+# TODO [J2] : Politique de refus par défaut en entrée, ouvertures explicites et
+# justifiées (SSH, API Kubernetes, HTTP/HTTPS).
+# Attention : les ports publiés par Docker contournent UFW (chaîne DOCKER-USER).
+# Chaque tâche cite la recommandation CIS ou ANSSI qu'elle applique (name ou
+# commentaire), pour la matrice de conformité.
+# ==============================================================================
+- name: TODO [J2] - implémenter le rôle firewall
+  ansible.builtin.meta: noop

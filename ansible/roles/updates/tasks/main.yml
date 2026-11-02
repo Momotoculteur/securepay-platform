@@ -1,0 +1,10 @@
+---
+# ==============================================================================
+# RÔLE updates - Mises à jour de sécurité
+# ==============================================================================
+# TODO [J2] : Mises à jour de sécurité automatiques sans redémarrage non maîtrisé du serveur de production.
+# Chaque tâche cite la recommandation CIS ou ANSSI qu'elle applique (name ou
+# commentaire), pour la matrice de conformité.
+# ==============================================================================
+- name: TODO [J2] - implémenter le rôle updates
+  ansible.builtin.meta: noop

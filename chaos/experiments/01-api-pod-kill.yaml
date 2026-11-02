@@ -1,0 +1,33 @@
+# ==============================================================================
+# EXPÉRIENCE 01 - PERTE D'UN POD DE L'API
+# ==============================================================================
+# État stable (mesuré avant) : SLO tenus sous charge nominale k6
+#   - taux de succès des paiements >= 99,5 %
+#   - latence p95 des paiements < 300 ms
+# Hypothèse : la perte d'un pod de l'API ne dégrade pas l'état stable.
+# Rayon d'impact : un seul pod, namespace securepay uniquement.
+# Condition d'arrêt : alerte burn rate critique, ou taux d'erreur > 5 % pendant
+#   1 minute -> kubectl delete -f <ce fichier> et retour au nominal.
+# Procédure :
+#   1. k6 run tests/robustness/nominal-load.js (dans un autre terminal)
+#   2. kubectl apply -f chaos/experiments/01-api-pod-kill.yaml
+#   3. Observer Grafana, les événements et les alertes ; capturer les preuves
+#   4. kubectl delete -f chaos/experiments/01-api-pod-kill.yaml
+# Résultat et preuves : docs/resilience.md et docs/preuves/
+#
+# [AUDIT ANOMALY] Avec replicaCount: 1, l'hypothèse est réfutée d'avance :
+# c'est voulu. Mesurez l'impact, corrigez, puis rejouez l'expérience.
+# ==============================================================================
+apiVersion: chaos-mesh.org/v1alpha1
+kind: PodChaos
+metadata:
+  name: api-pod-kill
+  namespace: securepay
+spec:
+  action: pod-kill
+  mode: one
+  selector:
+    namespaces:
+      - securepay
+    labelSelectors:
+      app.kubernetes.io/name: securepay-api

@@ -1,0 +1,27 @@
+---
+# ==============================================================================
+# SECUREPAY PLATFORM - DURCISSEMENT DE LA VM DE PRODUCTION (jalon J2)
+# ==============================================================================
+# Référentiels : CIS Benchmark Ubuntu Linux 24.04 LTS (niveau 1) et guide ANSSI
+# de configuration d'un système GNU/Linux (BP-028).
+#
+# Exigences :
+#   - idempotence : une deuxième exécution termine à changed=0
+#   - détection de dérive : ansible-playbook hardening.yml --check --diff
+#   - chaque recommandation non appliquée est une dérogation justifiée, tracée
+#     dans docs/conformite.md (ex : net.ipv4.ip_forward, requis par Docker/k3s)
+#
+# Attention : Docker et k3s ont besoin de règles réseau et de paramètres noyau
+# précis. Testez chaque rôle avec --check avant de l'appliquer, et gardez une
+# session `multipass shell` ouverte pour ne pas vous enfermer dehors.
+# ==============================================================================
+- name: Durcir la VM securepay-prod
+  hosts: securepay
+  become: true
+  roles:
+    - role: ssh
+    - role: firewall
+    - role: sysctl
+    - role: auditd
+    - role: updates
+    - role: apparmor

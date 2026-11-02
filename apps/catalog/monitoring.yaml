@@ -1,0 +1,42 @@
+# ==============================================================================
+# MONITORING - kube-prometheus-stack + règles du dépôt (jalon J3)
+# ==============================================================================
+# Pour activer : déplacer ce fichier dans apps/children/.
+# Chart kube-prometheus-stack 92.17.0 (Prometheus Operator v0.94.2)
+# ==============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 92.17.0
+      helm:
+        releaseName: kube-prometheus-stack
+        valueFiles:
+          - $values/observability/kube-prometheus-stack-values.yaml
+    # Référence au dépôt pour le fichier de valeurs ci-dessus
+    - repoURL: https://gitlab.com/<groupe>/securepay-platform.git
+      targetRevision: main
+      ref: values
+    # PrometheusRules versionnées (alertes, recording rules SLO)
+    - repoURL: https://gitlab.com/<groupe>/securepay-platform.git
+      targetRevision: main
+      path: observability/rules
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Les CRD du Prometheus Operator dépassent la taille d'annotation du client-side apply
+      - ServerSideApply=true

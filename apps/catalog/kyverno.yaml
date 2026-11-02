@@ -1,0 +1,33 @@
+# ==============================================================================
+# KYVERNO - Policy as Code à l'admission (jalon J2)
+# ==============================================================================
+# Pour activer : déplacer ce fichier dans apps/children/ (avec kyverno-policies.yaml).
+# Chart kyverno 3.9.2 = Kyverno v1.19.2
+# ==============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://kyverno.github.io/kyverno/
+    chart: kyverno
+    targetRevision: 3.9.2
+    # TODO [J2] : dimensionnement et réplicas du contrôleur d'admission
+    helm:
+      valuesObject: {}
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      # Les CRD Kyverno dépassent la taille d'annotation du client-side apply
+      - ServerSideApply=true

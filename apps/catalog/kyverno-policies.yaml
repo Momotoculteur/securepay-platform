@@ -1,0 +1,31 @@
+# ==============================================================================
+# POLITIQUES KYVERNO DU DÉPÔT (jalon J2)
+# ==============================================================================
+# Synchronise les politiques de policies/ (sans les tests du sous-dossier tests/).
+# À activer après kyverno.yaml : les CRD de politique doivent exister.
+# ==============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-policies
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://gitlab.com/<groupe>/securepay-platform.git
+    targetRevision: main
+    path: policies
+    directory:
+      # Ne pas descendre dans policies/tests/ : ce sont des ressources de test
+      recurse: false
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kyverno
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - SkipDryRunOnMissingResource=true

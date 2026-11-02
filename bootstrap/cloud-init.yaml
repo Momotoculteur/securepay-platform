@@ -1,0 +1,42 @@
+#cloud-config
+# ==============================================================================
+# SECUREPAY PLATFORM - VM DE PRODUCTION (Multipass, Ubuntu 24.04 LTS)
+# ==============================================================================
+# `make vm` remplace __SSH_PUBLIC_KEY__ par votre clé publique et écrit le fichier
+# rendu dans .build/ (ignoré par Git). Ne committez jamais de version rendue.
+#
+# Ce fichier ne fait que le strict minimum pour rendre la VM administrable.
+# Le durcissement est le travail du jalon J2, dans ansible/ (Hardening as Code).
+# ==============================================================================
+
+hostname: securepay-prod
+timezone: Europe/Paris
+
+users:
+  # Utilisateur `ubuntu` géré par Multipass (multipass exec / multipass shell)
+  - default
+  # Compte d'administration utilisé par Ansible
+  - name: opsadmin
+    gecos: SecurePay platform administrator
+    shell: /bin/bash
+    groups: [sudo]
+    # [AUDIT ANOMALY] sudo sans mot de passe ni restriction de commandes :
+    # acceptable pour amorcer la VM, à justifier ou à restreindre au J2.
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    lock_passwd: true
+    ssh_authorized_keys:
+      - __SSH_PUBLIC_KEY__
+
+# Authentification SSH par mot de passe désactivée dès le premier démarrage
+ssh_pwauth: false
+disable_root: true
+
+package_update: true
+package_upgrade: true
+packages:
+  - ca-certificates
+  - curl
+  - gnupg
+  - jq
+  - git
+  - make

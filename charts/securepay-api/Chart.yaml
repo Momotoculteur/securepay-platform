@@ -1,0 +1,7 @@
+apiVersion: v2
+name: securepay-api
+description: SecurePay Solutions - Core Payment API (chart de départ, non durci)
+type: application
+version: 0.1.0
+# Version de l'application déployée : l'image réellement tournée est fixée par son digest
+appVersion: "1.0.0"

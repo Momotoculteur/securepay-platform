@@ -1,0 +1,25 @@
+---
+extends: default
+
+# Les templates Helm ne sont pas du YAML valide avant rendu
+ignore: |
+  charts/*/templates/
+  .build/
+  rendered/
+
+rules:
+  line-length:
+    max: 160
+  document-start: disable
+  truthy:
+    check-keys: false
+  comments:
+    min-spaces-from-content: 1
+    # La première ligne d'un cloud-init doit être exactement "#cloud-config"
+    ignore: |
+      bootstrap/cloud-init.yaml
+  # Les commentaires de fin de bloc (TODO, AUDIT ANOMALY) restent alignés sur leur sujet
+  comments-indentation: disable
+  indentation:
+    spaces: 2
+    indent-sequences: consistent

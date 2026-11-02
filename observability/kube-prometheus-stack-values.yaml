@@ -1,0 +1,58 @@
+# ==============================================================================
+# KUBE-PROMETHEUS-STACK - VALEURS ADAPTÉES À k3s / k3d (jalon J3)
+# ==============================================================================
+# Ce qui est déjà réglé ici (pièges de compatibilité, sans valeur pédagogique) :
+#   - composants du plan de contrôle embarqués dans le binaire k3s : pas de
+#     cibles etcd / controller-manager / scheduler / kube-proxy séparées
+#   - sélection de TOUS les ServiceMonitor, PodMonitor et PrometheusRule du
+#     cluster, et pas seulement ceux portant le label de la release Helm
+#   - réception des métriques k6 en Prometheus remote write
+# ==============================================================================
+
+# k3s embarque ces composants dans un seul processus : leurs cibles par défaut
+# resteraient en erreur (DOWN) et déclencheraient des alertes parasites
+kubeEtcd:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+prometheus:
+  prometheusSpec:
+    # Sélection de toutes les ressources de supervision du cluster
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    # k6 -o experimental-prometheus-rw pousse ses métriques sur /api/v1/write
+    enableRemoteWriteReceiver: true
+    # Lab : rétention courte pour tenir dans la VM
+    retention: 2d
+    # TODO [J3] : requests/limits de Prometheus et stockage persistant
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - prometheus.securepay.local
+
+grafana:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - grafana.securepay.local
+  # [AUDIT ANOMALY] Mot de passe admin par défaut du chart. TODO [J2] : secret
+  # chiffré référencé par grafana.admin.existingSecret
+  # TODO [J3] : dashboards RED + error budget versionnés (observability/dashboards/)
+
+alertmanager:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    hosts:
+      - alertmanager.securepay.local
+  # TODO [J3] : configuration Alertmanager (routes par severity/cause, receveur
+  # Discord / Slack / e-mail, templates enrichis). Le webhook du receveur est
+  # un secret : à chiffrer, jamais en clair ici.

@@ -1,0 +1,10 @@
+---
+# ==============================================================================
+# RÔLE sysctl - Paramètres noyau
+# ==============================================================================
+# TODO [J2] : Paramètres réseau et mémoire du CIS, avec les exceptions exigées par Docker et k3s documentées comme dérogations.
+# Chaque tâche cite la recommandation CIS ou ANSSI qu'elle applique (name ou
+# commentaire), pour la matrice de conformité.
+# ==============================================================================
+- name: TODO [J2] - implémenter le rôle sysctl
+  ansible.builtin.meta: noop

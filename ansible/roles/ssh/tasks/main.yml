@@ -1,0 +1,10 @@
+---
+# ==============================================================================
+# RÔLE ssh - Durcissement du service SSH
+# ==============================================================================
+# TODO [J2] : Connexion root interdite, authentification par clé uniquement, algorithmes restreints, bannière légale, délais et tentatives limités.
+# Chaque tâche cite la recommandation CIS ou ANSSI qu'elle applique (name ou
+# commentaire), pour la matrice de conformité.
+# ==============================================================================
+- name: TODO [J2] - implémenter le rôle ssh
+  ansible.builtin.meta: noop

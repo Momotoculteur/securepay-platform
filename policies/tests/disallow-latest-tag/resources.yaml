@@ -1,0 +1,38 @@
+# Ressources de test de la politique disallow-latest-tag (jamais appliquées au cluster)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-tag-latest
+  namespace: securepay
+spec:
+  containers:
+    - name: api
+      image: registry.gitlab.com/securepay/securepay-api:latest
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-digest
+  namespace: securepay
+spec:
+  containers:
+    - name: api
+      image: registry.gitlab.com/securepay/securepay-api@sha256:0000000000000000000000000000000000000000000000000000000000000000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-tag-latest
+  namespace: securepay
+spec:
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      containers:
+        - name: api
+          image: registry.gitlab.com/securepay/securepay-api:latest

@@ -1,0 +1,28 @@
+# ==============================================================================
+# APPLICATION RACINE (pattern app-of-apps)
+# ==============================================================================
+# Appliquée une seule fois par bootstrap/bootstrap.sh. Elle synchronise toutes
+# les Applications présentes dans apps/children/ : activer un composant revient
+# à déplacer son manifeste de apps/catalog/ vers apps/children/ par Merge Request.
+# ==============================================================================
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    # TODO [J1] : remplacer <groupe> par le groupe GitLab du trinôme (dans tout apps/)
+    repoURL: https://gitlab.com/<groupe>/securepay-platform.git
+    targetRevision: main
+    path: apps/children
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

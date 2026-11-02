@@ -1,0 +1,23 @@
+# ==============================================================================
+# Valeurs du chart argo-cd (bootstrap)
+# ==============================================================================
+global:
+  domain: argocd.securepay.local
+
+configs:
+  params:
+    # TLS terminé en amont : l'Ingress Traefik sert l'interface
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: true
+    ingressClassName: traefik
+    # [AUDIT ANOMALY] Interface d'administration servie en HTTP : identifiants
+    # en clair sur le réseau. TODO [J2] : TLS sur l'Ingress (cert-manager ou
+    # certificat auto-signé) et redirection HTTP vers HTTPS.
+    tls: false
+
+# Pas de SSO dans le lab : l'utilisateur admin local suffit
+dex:
+  enabled: false

@@ -1,0 +1,45 @@
+# ==============================================================================
+# RÈGLE D'EXEMPLE - L'ALERTE NOMME LE COMPOSANT ET LA CAUSE
+# ==============================================================================
+# Critère RNCP visé : « l'automatisation identifie les composants défaillants
+# et établit la cause principale de la défaillance ».
+# Une alerte « le pod redémarre » ne suffit pas : elle doit dire QUOI (component)
+# et POURQUOI (cause), et pointer vers la procédure (runbook_url).
+# ==============================================================================
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: securepay-container-oomkilled
+  namespace: monitoring
+spec:
+  groups:
+    - name: securepay.causes
+      rules:
+        - alert: SecurePayContainerOOMKilled
+          # Redémarrage récent ET dernière terminaison due à un dépassement mémoire
+          expr: |
+            (
+              kube_pod_container_status_last_terminated_reason{namespace="securepay", reason="OOMKilled"} == 1
+            )
+            and on (namespace, pod, container)
+            (
+              increase(kube_pod_container_status_restarts_total{namespace="securepay"}[10m]) > 0
+            )
+          for: 0m
+          labels:
+            severity: warning
+            component: "{{ $labels.container }}"
+            cause: OOMKilled
+          annotations:
+            summary: "{{ $labels.namespace }}/{{ $labels.pod }} : conteneur {{ $labels.container }} tué pour dépassement mémoire"
+            description: >-
+              Le conteneur {{ $labels.container }} du pod {{ $labels.pod }} a redémarré
+              dans les 10 dernières minutes après avoir dépassé sa limite mémoire (OOMKilled).
+            # TODO [J4] : remplacer <groupe> et rédiger le runbook correspondant
+            runbook_url: https://gitlab.com/<groupe>/securepay-platform/-/blob/main/docs/runbooks/oomkilled.md
+
+    # TODO [J3] : recording rules des SLI (taux de succès, latence p95) et
+    #             alertes burn rate multi-fenêtres sur les SLO
+    # TODO [J4] : une règle par cause (CrashLoopBackOff, ImagePullBackOff,
+    #             réplicas indisponibles, nœud NotReady, HPA au maximum),
+    #             toutes avec component, cause et runbook_url

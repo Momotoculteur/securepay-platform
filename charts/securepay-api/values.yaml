@@ -1,0 +1,77 @@
+# ==============================================================================
+# SECUREPAY API - VALEURS PAR DÉFAUT DU CHART (LEGACY, NON CONFORME PSSI)
+# ==============================================================================
+# Ce chart déploie l'API telle qu'elle tournait avant l'audit. Il fonctionne,
+# mais reproduit volontairement les anomalies relevées par l'audit PSSI et par
+# les incidents de production. Chaque [AUDIT ANOMALY] doit être traitée au
+# jalon indiqué, et la correction prouvée dans docs/preuves/.
+# ==============================================================================
+
+# [AUDIT ANOMALY] Instance unique : la perte du pod ou de son nœud coupe le
+# service (incident « perte d'un serveur »). TODO [J3/J4]
+replicaCount: 1
+
+image:
+  # TODO [J1] : registre du projet securepay-api du groupe
+  repository: registry.gitlab.com/<groupe>/securepay-api
+  # Digest de l'image signée (sha256:...). Renseigné par la MR de promotion
+  # dans values-production.yaml : il prime sur le tag.
+  digest: ""
+  # [AUDIT ANOMALY] Tag mutable : rien ne garantit que l'image déployée est
+  # celle qui a passé les Quality Gates. TODO [J1/J2]
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# TODO [J1] : secret de pull du registre (deploy token read_registry),
+# chiffré dans Git au J2
+imagePullSecrets: []
+
+# Variables d'environnement de l'application
+env:
+  NODE_ENV: production
+  PORT: "3000"
+  # [AUDIT ANOMALY] Secret en clair dans les valeurs Helm, donc dans Git et dans
+  # la spec du Deployment. TODO [J2] : Secret chiffré (Sealed Secrets ou SOPS).
+  JWT_SECRET: "super-secret-jwt-signing-key-for-local-dev-only"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: traefik
+  host: api.securepay.local
+  # [AUDIT ANOMALY] API de paiement exposée en HTTP. TODO [J2]
+  tls: []
+
+# [AUDIT ANOMALY] Ni requests ni limits : classe QoS BestEffort, premier pod
+# évincé sous pression, aucun HPA possible sur le CPU. TODO [J2/J3]
+resources: {}
+
+# [AUDIT ANOMALY] Aucun securityContext : le conteneur peut tourner en root,
+# avec élévation de privilèges et toutes les capabilities par défaut. TODO [J2]
+podSecurityContext: {}
+securityContext: {}
+
+# [AUDIT ANOMALY] Jeton du ServiceAccount monté dans le pod sans besoin. TODO [J2]
+automountServiceAccountToken: true
+
+# [AUDIT ANOMALY] Seule la liveness est définie : un pod qui démarre ou dont une
+# dépendance est indisponible reçoit quand même du trafic. TODO [J3]
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 10
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Reste à concevoir au fil des jalons (à ajouter au chart) :
+# TODO [J2] NetworkPolicies (refus par défaut puis ouvertures explicites)
+# TODO [J3] Probes readiness/startup, ServiceMonitor, HPA, PodDisruptionBudget
+# TODO [J4] Rollout Argo Rollouts canary + AnalysisTemplate, répartition sur les nœuds

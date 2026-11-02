@@ -1,0 +1,10 @@
+---
+# ==============================================================================
+# RÔLE apparmor - AppArmor
+# ==============================================================================
+# TODO [J2] : AppArmor actif et profils en mode enforce.
+# Chaque tâche cite la recommandation CIS ou ANSSI qu'elle applique (name ou
+# commentaire), pour la matrice de conformité.
+# ==============================================================================
+- name: TODO [J2] - implémenter le rôle apparmor
+  ansible.builtin.meta: noop

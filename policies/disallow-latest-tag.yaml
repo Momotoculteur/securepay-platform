@@ -1,0 +1,48 @@
+# ==============================================================================
+# POLITIQUE D'EXEMPLE - INTERDIRE LE TAG `latest`
+# ==============================================================================
+# Kyverno 1.19 : ClusterPolicy est obsolète (suppression prévue en 1.20).
+# Les politiques s'écrivent avec les types CEL : ValidatingPolicy,
+# ImageValidatingPolicy (signatures d'images), MutatingPolicy...
+#
+# Mode Audit : la ressource est admise, la violation est consignée dans un
+# PolicyReport. On mesure l'impact avant de passer en Deny.
+# ==============================================================================
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
+metadata:
+  name: disallow-latest-tag
+  annotations:
+    policies.kyverno.io/title: Interdire le tag latest
+    policies.kyverno.io/category: Supply chain
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/description: >-
+      Un tag mutable comme latest ne garantit pas que l'image déployée est celle
+      qui a été construite, scannée et signée par la pipeline. Les images doivent
+      être référencées par un tag immuable ou, mieux, par leur digest.
+spec:
+  # TODO [J2] : passer en Deny une fois les PolicyReports analysés
+  validationActions:
+    - Audit
+  # Génère automatiquement les variantes pour les contrôleurs de pods
+  autogen:
+    podControllers:
+      controllers:
+        - deployments
+        - statefulsets
+        - daemonsets
+        - jobs
+        - cronjobs
+  matchConstraints:
+    resourceRules:
+      - apiGroups: [""]
+        apiVersions: [v1]
+        operations: [CREATE, UPDATE]
+        resources: [pods]
+  validations:
+    - expression: >-
+        object.spec.containers.all(c, !c.image.endsWith(':latest')) &&
+        object.spec.?initContainers.orValue([]).all(c, !c.image.endsWith(':latest'))
+      message: >-
+        Le tag 'latest' est interdit : référencez l'image par un tag immuable
+        ou par son digest (image@sha256:...).

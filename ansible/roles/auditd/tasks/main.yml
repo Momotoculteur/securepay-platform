@@ -1,0 +1,10 @@
+---
+# ==============================================================================
+# RÔLE auditd - Journalisation d'audit
+# ==============================================================================
+# TODO [J2] : Règles auditd sur les fichiers d'identité, sudoers, la configuration SSH et Docker, rétention des journaux.
+# Chaque tâche cite la recommandation CIS ou ANSSI qu'elle applique (name ou
+# commentaire), pour la matrice de conformité.
+# ==============================================================================
+- name: TODO [J2] - implémenter le rôle auditd
+  ansible.builtin.meta: noop

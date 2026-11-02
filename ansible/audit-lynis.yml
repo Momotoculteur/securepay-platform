@@ -1,0 +1,41 @@
+---
+# ==============================================================================
+# AUDIT LYNIS - PREUVE AVANT / APRÈS DURCISSEMENT
+# ==============================================================================
+# ansible-playbook audit-lynis.yml -e audit_label=avant
+# ansible-playbook audit-lynis.yml -e audit_label=apres
+# Le rapport est rapatrié dans docs/preuves/ avec un nom horodaté.
+# ==============================================================================
+- name: Auditer la VM avec Lynis
+  hosts: securepay
+  become: true
+  vars:
+    audit_label: audit
+    audit_stamp: "{{ lookup('ansible.builtin.pipe', 'date +%Y-%m-%d_%H%M') }}"
+  tasks:
+    - name: Installer Lynis
+      ansible.builtin.apt:
+        name: lynis
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Lancer l'audit système
+      ansible.builtin.command: lynis audit system --quiet --no-colors
+      register: lynis_run
+      changed_when: false
+
+    - name: Extraire l'indice de durcissement
+      ansible.builtin.command: grep -E '^hardening_index=' /var/log/lynis-report.dat
+      register: lynis_index
+      changed_when: false
+
+    - name: Afficher l'indice de durcissement
+      ansible.builtin.debug:
+        msg: "{{ lynis_index.stdout }}"
+
+    - name: Rapatrier le rapport dans le dossier de preuves
+      ansible.builtin.fetch:
+        src: /var/log/lynis-report.dat
+        dest: "../docs/preuves/{{ audit_stamp }}_lynis-{{ audit_label }}.dat"
+        flat: true
